@@ -1,41 +1,40 @@
 import React from 'react';
-import { auth, provider } from './firebase'; // Import the Firebase config
-import { signInWithPopup } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
-const GoogleSignIn = () => {
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+const LoginGoogle = () => {
+    const handleGoogleLogin = () => {
+        const auth = getAuth();
+        const provider = new GoogleAuthProvider();
 
-      // Get the Firebase ID token
-      const token = await user.getIdToken();
+        signInWithPopup(auth, provider)
+            .then((result) => {
+                return result.user.getIdToken(); // Get the ID token
+            })
+            .then((token) => {
+                return fetch('http://localhost:5000/api/login-google', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token }),
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.uid) {
+                    console.log("Sign-in successful", data);
+                } else {
+                    console.error("Sign-in failed:", data.error);
+                }
+            })
+            .catch(error => console.error("Sign-in failed:", error));
+    };
 
-      // Send the ID token to your backend
-      const res = await fetch('http://localhost:5000/api/login-google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        console.log('User signed in successfully:', data);
-      } else {
-        console.error('Sign-in failed:', data.error);
-      }
-    } catch (error) {
-      console.error('Error during Google sign-in:', error);
-    }
-  };
-
-  return (
-    <button onClick={handleGoogleSignIn}>
-      Sign in with Google
-    </button>
-  );
+    return (
+        <button onClick={handleGoogleLogin}>
+            Sign in with Google
+        </button>
+    );
 };
 
-export default GoogleSignIn;
+export default LoginGoogle;
