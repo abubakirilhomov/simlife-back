@@ -13,14 +13,14 @@ router.post('/register-google', async (req, res) => {
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
         const { uid, email } = decodedToken;
-
-        let user = await User.findOne({ uid });
+        let user = await User.findOne({ email });
+        const uidSlice = uid.slice(0, 6);
         if (!user) {
             user = new User({
-                username,
-                email,
-                uid,
-                password,  // Save the password provided by the user
+                username: username,
+                email: email,
+                uid: uidSlice,
+                password:password,  
                 chat_id: generateChatId(),
                 balance: 0.00,
                 business: 0.00,
