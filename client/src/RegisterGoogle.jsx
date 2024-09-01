@@ -1,41 +1,71 @@
-import React from 'react';
-import { auth, provider } from './firebase'; // Import the Firebase config
-import { signInWithPopup } from 'firebase/auth';
+import React, { useState } from 'react';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import axios from 'axios';
 
-const GoogleRegister = () => {
-  const handleGoogleRegister = async () => {
+const RegisterGoogle = ({ onSuccess }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [idToken, setIdToken] = useState('');
+
+  const handleGoogleSignIn = async () => {
     try {
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      // Get the Firebase ID token
-      const token = await user.getIdToken();
 
-      // Send the ID token to your backend
-      const res = await fetch('http://localhost:5000/api/register-google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
+      // Get ID token from the result
+      const token = await result.user.getIdToken();
+      setIdToken(token);
+      setIsSignedIn(true);
+    } catch (error) {
+      console.error('Google Sign-In failed:', error.response?.data || error.message);
+    }
+  };
+
+  const handleRegistration = async () => {
+    try {
+      // Send the token, username, and password to the backend
+      const response = await axios.post('http://localhost:5000/api/register-google', {
+        token: idToken,
+        username,
+        password,
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        console.log('User registered successfully:', data);
-      } else {
-        console.error('Registration failed:', data.error);
-      }
+      console.log('Registration successful:', response.data);
+      onSuccess(); // Call the onSuccess callback to update the Register component
     } catch (error) {
-      console.error('Error during Google registration:', error);
+      console.error('Registration failed:', error.response?.data || error.message);
     }
   };
 
   return (
-    <button onClick={handleGoogleRegister}>
-      Register with Google
-    </button>
+    <div>
+      {!isSignedIn ? (
+        <button onClick={handleGoogleSignIn}>
+          Sign In with Google
+        </button>
+      ) : (
+        <div>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button onClick={handleRegistration}>
+            Register with Google
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default GoogleRegister;
+export default RegisterGoogle;

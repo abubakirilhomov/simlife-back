@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { auth, provider, signInWithPopup } from './firebase'; // Import the Firebase config
-import AuthGoogle from './RegisterGoogle'
-
+import { auth } from './firebase'; // Import the Firebase config
+import RegisterGoogle from './RegisterGoogle';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState(null);
+  const [isGoogleRegistered, setIsGoogleRegistered] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -25,6 +25,7 @@ const Register = () => {
       const data = await response.json();
       if (response.ok) {
         console.log('User registered successfully:', data);
+        // Redirect or update state as needed
       } else {
         setError(data.error);
       }
@@ -34,29 +35,37 @@ const Register = () => {
     }
   };
 
+  const handleGoogleRegisterSuccess = () => {
+    setIsGoogleRegistered(true);
+  };
+
   return (
     <div>
-      <h2>Register</h2>
-      <form onSubmit={handleRegister}>
-        <div>
-          <label>Name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-        <div>
-          <label>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-        <button type="submit">Register</button>
-        {error && <p>{error}</p>}
-      </form>
-      
-      <hr />
-      
-      <AuthGoogle />
+      {!isGoogleRegistered ? (
+        <>
+          <h2>Register</h2>
+          <form onSubmit={handleRegister}>
+            <div>
+              <label>Name:</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div>
+              <label>Email:</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div>
+              <label>Password:</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <button type="submit">Register</button>
+            {error && <p>{error}</p>}
+          </form>
+          
+          <hr />
+        </>
+      ) : null}
+
+      <RegisterGoogle onSuccess={handleGoogleRegisterSuccess} />
     </div>
   );
 };
